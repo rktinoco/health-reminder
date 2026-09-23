@@ -26,6 +26,8 @@ const TIMER_ID: usize = 1;
 
 const IDM_PAUSE: usize = 100;
 const IDM_STARTUP: usize = 101;
+const IDM_WATER_ENABLED: usize = 102;
+const IDM_EXERCISE_ENABLED: usize = 103;
 const IDM_DRINK_15: usize = 110;
 const IDM_DRINK_30: usize = 111;
 const IDM_DRINK_60: usize = 112;
@@ -162,11 +164,14 @@ struct Texts {
     test_title: &'static str,
     test_body: &'static str,
     paused_tooltip: &'static str,
+    disabled_tooltip: &'static str,
     next: &'static str,
     water: &'static str,
     movement: &'static str,
     pause: &'static str,
     resume: &'static str,
+    water_reminders: &'static str,
+    exercise_reminders: &'static str,
     startup: &'static str,
     drink: &'static str,
     exercise: &'static str,
@@ -187,9 +192,9 @@ struct Texts {
 
 fn texts(locale: Locale) -> Texts {
     match locale {
-        Locale::English => Texts { name: "Health Reminder", drink_title: "🥤 Time to drink water", drink_body: "Take a short break and drink a glass of water.", exercise_title: "🙆‍♂️ Time to move", exercise_body: "Stand up and stretch for a few minutes.", test_title: "🔔 Test notification", test_body: "Health Reminder notifications are working.", paused_tooltip: "Paused", next: "Next", water: "water", movement: "exercise", pause: "Pause reminders", resume: "Resume reminders", startup: "Start with Windows", drink: "Water interval", exercise: "Exercise interval", settings: "Settings", intervals: "Intervals", language: "Language", english: "English", spanish: "Spanish", portuguese: "Portuguese", about: "About", about_title: "About Health Reminder", version_label: "Version", about_attribution: "Developed by Rafael Tinoco using Claude", test: "Test notification", exit: "Exit", error: "Could not update Windows startup settings." },
-        Locale::Spanish => Texts { name: "Recordatorio de salud", drink_title: "🥤 Hora de beber agua", drink_body: "Haz una pausa y bebe un vaso de agua.", exercise_title: "🙆‍♂️ Hora de moverse", exercise_body: "Levántate y estira durante unos minutos.", test_title: "🔔 Notificación de prueba", test_body: "Las notificaciones funcionan correctamente.", paused_tooltip: "Pausado", next: "Próximo", water: "agua", movement: "ejercicio", pause: "Pausar recordatorios", resume: "Continuar recordatorios", startup: "Iniciar con Windows", drink: "Intervalo de agua", exercise: "Intervalo de ejercicio", settings: "Configuración", intervals: "Intervalos", language: "Idioma", english: "Inglés", spanish: "Español", portuguese: "Portugués", about: "Acerca de", about_title: "Acerca de Health Reminder", version_label: "Versión", about_attribution: "Desarrollado por Rafael Tinoco con Claude", test: "Notificación de prueba", exit: "Salir", error: "No se pudieron actualizar las opciones de inicio de Windows." },
-        Locale::Portuguese => Texts { name: "Lembrete de saúde", drink_title: "🥤 Hora de beber água", drink_body: "Faça uma pausa e beba um copo de água.", exercise_title: "🙆‍♂️ Hora de se movimentar", exercise_body: "Levante-se e alongue-se por alguns minutos.", test_title: "🔔 Notificação de teste", test_body: "As notificações estão funcionando.", paused_tooltip: "Pausado", next: "Próxima", water: "água", movement: "exercício", pause: "Pausar lembretes", resume: "Continuar lembretes", startup: "Iniciar com o Windows", drink: "Intervalo de água", exercise: "Intervalo de exercício", settings: "Configurações", intervals: "Intervalos", language: "Idioma", english: "Inglês", spanish: "Espanhol", portuguese: "Português", about: "Sobre", about_title: "Sobre o Health Reminder", version_label: "Versão", about_attribution: "Desenvolvido por Rafael Tinoco usando Claude", test: "Notificação de teste", exit: "Sair", error: "Não foi possível atualizar as configurações de inicialização do Windows." },
+        Locale::English => Texts { name: "Health Reminder", drink_title: "🥤 Time to drink water", drink_body: "Take a short break and drink a glass of water.", exercise_title: "🙆‍♂️ Time to move", exercise_body: "Stand up and stretch for a few minutes.", test_title: "🔔 Test notification", test_body: "Health Reminder notifications are working.", paused_tooltip: "Paused", disabled_tooltip: "No reminders enabled", next: "Next", water: "water", movement: "exercise", pause: "Pause reminders", resume: "Resume reminders", water_reminders: "Water reminders", exercise_reminders: "Exercise reminders", startup: "Start with Windows", drink: "Water interval", exercise: "Exercise interval", settings: "Settings", intervals: "Intervals", language: "Language", english: "English", spanish: "Spanish", portuguese: "Portuguese", about: "About", about_title: "About Health Reminder", version_label: "Version", about_attribution: "Developed by Rafael Tinoco using Claude", test: "Test notification", exit: "Exit", error: "Could not update Windows startup settings." },
+        Locale::Spanish => Texts { name: "Recordatorio de salud", drink_title: "🥤 Hora de beber agua", drink_body: "Haz una pausa y bebe un vaso de agua.", exercise_title: "🙆‍♂️ Hora de moverse", exercise_body: "Levántate y estira durante unos minutos.", test_title: "🔔 Notificación de prueba", test_body: "Las notificaciones funcionan correctamente.", paused_tooltip: "Pausado", disabled_tooltip: "No hay recordatorios activos", next: "Próximo", water: "agua", movement: "ejercicio", pause: "Pausar recordatorios", resume: "Continuar recordatorios", water_reminders: "Recordatorios de agua", exercise_reminders: "Recordatorios de ejercicio", startup: "Iniciar con Windows", drink: "Intervalo de agua", exercise: "Intervalo de ejercicio", settings: "Configuración", intervals: "Intervalos", language: "Idioma", english: "Inglés", spanish: "Español", portuguese: "Portugués", about: "Acerca de", about_title: "Acerca de Health Reminder", version_label: "Versión", about_attribution: "Desarrollado por Rafael Tinoco con Claude", test: "Notificación de prueba", exit: "Salir", error: "No se pudieron actualizar las opciones de inicio de Windows." },
+        Locale::Portuguese => Texts { name: "Lembrete de saúde", drink_title: "🥤 Hora de beber água", drink_body: "Faça uma pausa e beba um copo de água.", exercise_title: "🙆‍♂️ Hora de se movimentar", exercise_body: "Levante-se e alongue-se por alguns minutos.", test_title: "🔔 Notificação de teste", test_body: "As notificações estão funcionando.", paused_tooltip: "Pausado", disabled_tooltip: "Nenhum lembrete ativo", next: "Próxima", water: "água", movement: "exercício", pause: "Pausar lembretes", resume: "Continuar lembretes", water_reminders: "Lembretes de água", exercise_reminders: "Lembretes de exercício", startup: "Iniciar com o Windows", drink: "Intervalo de água", exercise: "Intervalo de exercício", settings: "Configurações", intervals: "Intervalos", language: "Idioma", english: "Inglês", spanish: "Espanhol", portuguese: "Português", about: "Sobre", about_title: "Sobre o Health Reminder", version_label: "Versão", about_attribution: "Desenvolvido por Rafael Tinoco usando Claude", test: "Notificação de teste", exit: "Sair", error: "Não foi possível atualizar as configurações de inicialização do Windows." },
     }
 }
 
@@ -200,6 +205,8 @@ struct AppState {
     next_drink: Instant,
     next_exercise: Instant,
     paused: bool,
+    water_enabled: bool,
+    exercise_enabled: bool,
     startup: bool,
 }
 
@@ -215,7 +222,14 @@ fn remaining_text(seconds: u64) -> String {
 fn tray_tooltip(state: &AppState) -> String {
     let t = texts(state.locale);
     if state.paused { return format!("{} - {}", t.name, t.paused_tooltip); }
-    let (label, due) = if state.next_drink <= state.next_exercise { (t.water, state.next_drink) } else { (t.movement, state.next_exercise) };
+    if !state.water_enabled && !state.exercise_enabled { return format!("{} - {}", t.name, t.disabled_tooltip); }
+    let (label, due) = match (state.water_enabled, state.exercise_enabled) {
+        (true, true) if state.next_drink <= state.next_exercise => (t.water, state.next_drink),
+        (true, true) => (t.movement, state.next_exercise),
+        (true, false) => (t.water, state.next_drink),
+        (false, true) => (t.movement, state.next_exercise),
+        (false, false) => unreachable!(),
+    };
     let remaining = due.saturating_duration_since(now()).as_secs();
     format!("{} - {} {} {}", t.name, t.next, label, remaining_text(remaining))
 }
@@ -253,6 +267,8 @@ fn save_settings(state: &AppState) {
     write_setting("DrinkIntervalSeconds", state.drink_seconds as u32);
     write_setting("ExerciseIntervalSeconds", state.exercise_seconds as u32);
     write_setting("Paused", if state.paused { 1 } else { 0 });
+    write_setting("WaterEnabled", if state.water_enabled { 1 } else { 0 });
+    write_setting("ExerciseEnabled", if state.exercise_enabled { 1 } else { 0 });
     write_setting("StartupEnabled", if state.startup { 1 } else { 0 });
 }
 
@@ -348,6 +364,10 @@ fn show_menu(hwnd: Hwnd, state: &AppState) {
         let menu = CreatePopupMenu();
         add_menu_item(menu, IDM_PAUSE, if state.paused { t.resume } else { t.pause });
         CheckMenuItem(menu, IDM_PAUSE, checked(state.paused));
+        add_menu_item(menu, IDM_WATER_ENABLED, t.water_reminders);
+        CheckMenuItem(menu, IDM_WATER_ENABLED, checked(state.water_enabled));
+        add_menu_item(menu, IDM_EXERCISE_ENABLED, t.exercise_reminders);
+        CheckMenuItem(menu, IDM_EXERCISE_ENABLED, checked(state.exercise_enabled));
         let settings_menu = CreatePopupMenu();
         add_menu_item(settings_menu, IDM_STARTUP, t.startup);
         CheckMenuItem(settings_menu, IDM_STARTUP, checked(state.startup));
@@ -413,8 +433,8 @@ unsafe extern "system" fn window_proc(hwnd: Hwnd, message: u32, w_param: Wparam,
         let state = &mut *state_ptr;
         if !state.paused {
             let current = now();
-            if current >= state.next_drink { let t = texts(state.locale); notify(hwnd, t.drink_title, t.drink_body); state.next_drink = current + Duration::from_secs(state.drink_seconds); }
-            if current >= state.next_exercise { let t = texts(state.locale); notify(hwnd, t.exercise_title, t.exercise_body); state.next_exercise = current + Duration::from_secs(state.exercise_seconds); }
+            if state.water_enabled && current >= state.next_drink { let t = texts(state.locale); notify(hwnd, t.drink_title, t.drink_body); state.next_drink = current + Duration::from_secs(state.drink_seconds); }
+            if state.exercise_enabled && current >= state.next_exercise { let t = texts(state.locale); notify(hwnd, t.exercise_title, t.exercise_body); state.next_exercise = current + Duration::from_secs(state.exercise_seconds); }
         }
         update_tray_icon(hwnd, state);
         return 0;
@@ -423,6 +443,8 @@ unsafe extern "system" fn window_proc(hwnd: Hwnd, message: u32, w_param: Wparam,
         let state = &mut *state_ptr;
         match w_param & 0xffff {
             IDM_PAUSE => state.paused = !state.paused,
+            IDM_WATER_ENABLED => { state.water_enabled = !state.water_enabled; if state.water_enabled { state.next_drink = now() + Duration::from_secs(state.drink_seconds); } }
+            IDM_EXERCISE_ENABLED => { state.exercise_enabled = !state.exercise_enabled; if state.exercise_enabled { state.next_exercise = now() + Duration::from_secs(state.exercise_seconds); } }
             IDM_TEST => { let t = texts(state.locale); notify(hwnd, t.test_title, t.test_body); }
             IDM_STARTUP => { let enabled = !state.startup; if set_startup(enabled) { state.startup = enabled; } else { let t = texts(state.locale); let caption = wide(t.name); let body = wide(t.error); MessageBoxW(hwnd, body.as_ptr(), caption.as_ptr(), 0x10); } }
             IDM_DRINK_15 => { state.drink_seconds = 900; state.next_drink = now() + Duration::from_secs(900); }
@@ -466,8 +488,10 @@ fn main() {
         let drink_seconds = valid_drink_interval(read_setting("DrinkIntervalSeconds", 1800));
         let exercise_seconds = valid_exercise_interval(read_setting("ExerciseIntervalSeconds", 3600));
         let paused = read_setting("Paused", 0) != 0;
+        let water_enabled = read_setting("WaterEnabled", 1) != 0;
+        let exercise_enabled = read_setting("ExerciseEnabled", 1) != 0;
         let startup = startup_enabled();
-        let state = Box::new(AppState { locale, drink_seconds, exercise_seconds, next_drink: now() + Duration::from_secs(drink_seconds), next_exercise: now() + Duration::from_secs(exercise_seconds), paused, startup });
+        let state = Box::new(AppState { locale, drink_seconds, exercise_seconds, next_drink: now() + Duration::from_secs(drink_seconds), next_exercise: now() + Duration::from_secs(exercise_seconds), paused, water_enabled, exercise_enabled, startup });
         save_settings(&state);
         let tray_icon_handle = health_icon(instance, state.paused);
         let tooltip = tray_tooltip(&state);
