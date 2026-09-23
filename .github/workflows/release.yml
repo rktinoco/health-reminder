@@ -4,6 +4,13 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Tag to build and publish
+        required: true
+        default: v2026.01
+        type: string
 
 permissions:
   contents: write
@@ -14,9 +21,40 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
 
       - name: Build Windows x64 executable
         run: cargo build --release --locked
+
+      - name: Sign and verify executable
+        shell: pwsh
+        env:
+          WINDOWS_SIGNING_PFX_BASE64: ${{ secrets.WINDOWS_SIGNING_PFX_BASE64 }}
+          WINDOWS_SIGNING_PFX_PASSWORD: ${{ secrets.WINDOWS_SIGNING_PFX_PASSWORD }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_SIGNING_PFX_BASE64) -or [string]::IsNullOrWhiteSpace($env:WINDOWS_SIGNING_PFX_PASSWORD)) {
+            throw "Set the WINDOWS_SIGNING_PFX_BASE64 and WINDOWS_SIGNING_PFX_PASSWORD repository secrets before publishing a signed release."
+          }
+
+          $certificatePath = Join-Path $env:RUNNER_TEMP 'health-reminder-signing.pfx'
+          try {
+            [System.IO.File]::WriteAllBytes($certificatePath, [Convert]::FromBase64String($env:WINDOWS_SIGNING_PFX_BASE64))
+
+            $sdkBin = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\bin'
+            $signTool = Get-ChildItem -Path (Join-Path $sdkBin '*\x64\signtool.exe') -ErrorAction Stop |
+              Sort-Object { [version]$_.Directory.Parent.Name } -Descending |
+              Select-Object -First 1 -ExpandProperty FullName
+
+            & $signTool sign /fd SHA256 /tr https://timestamp.digicert.com /td SHA256 /f $certificatePath /p $env:WINDOWS_SIGNING_PFX_PASSWORD /v target\release\health-reminder.exe
+            if ($LASTEXITCODE -ne 0) { throw "SignTool failed to sign the executable (exit code $LASTEXITCODE)." }
+
+            & $signTool verify /pa /v target\release\health-reminder.exe
+            if ($LASTEXITCODE -ne 0) { throw "SignTool could not verify the executable signature (exit code $LASTEXITCODE)." }
+          }
+          finally {
+            Remove-Item -LiteralPath $certificatePath -Force -ErrorAction SilentlyContinue
+          }
 
       - name: Package release files
         shell: pwsh
@@ -30,11 +68,23 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG_NAME: ${{ github.ref_name }}
+          TAG_NAME: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
         run: |
           $version = $env:TAG_NAME.TrimStart('v')
-          gh release create "$env:TAG_NAME" `
-            dist\health-reminder-windows-x64.exe `
-            dist\health-reminder-windows-x64.zip `
-            --title "Health Reminder $version" `
-            --notes "Windows x64 build. Download the EXE for a quick start, or the ZIP for the EXE, README, and license."
+          $title = "Health Reminder $version"
+          $notes = "Signed Windows x64 build. Download the EXE for a quick start, or the ZIP for the EXE, README, and license."
+
+          $null = gh release view "$env:TAG_NAME" --json tagName 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload "$env:TAG_NAME" dist\health-reminder-windows-x64.exe dist\health-reminder-windows-x64.zip --clobber
+            if ($LASTEXITCODE -ne 0) { throw "Could not replace the release assets." }
+            gh release edit "$env:TAG_NAME" --title $title --notes $notes
+          }
+          else {
+            gh release create "$env:TAG_NAME" `
+              dist\health-reminder-windows-x64.exe `
+              dist\health-reminder-windows-x64.zip `
+              --title $title `
+              --notes $notes
+          }
+          if ($LASTEXITCODE -ne 0) { throw "Could not publish the signed GitHub release." }
