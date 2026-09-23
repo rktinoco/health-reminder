@@ -11,7 +11,7 @@ Long stretches at a desk make it easy to forget the basics. Health Reminder brin
 ## Features
 
 - **Hydration and movement reminders** with adjustable schedules
-- **Purpose-specific notification icons** for water and movement reminders
+- **Emoji-labeled notifications** for water, movement, and test reminders
 - **Quiet tray experience** with a tooltip showing what reminder is next
 - **Quick pause and resume** whenever you need uninterrupted time
 - **Personalized intervals:** water every 15, 30, or 60 minutes; movement every 30, 60, or 120 minutes
@@ -21,6 +21,10 @@ Long stretches at a desk make it easy to forget the basics. Health Reminder brin
 - **Dependency-free Rust app** using native Windows features
 
 ## Get started
+
+### Download for Windows x64
+
+Download the latest [Windows x64 executable or ZIP package](https://github.com/rktinoco/health-reminder/releases/latest) from GitHub Releases.
 
 ### Build from source
 

@@ -25,8 +25,6 @@ fn find_resource_compiler() -> Option<PathBuf> {
 fn main() {
     println!("cargo:rerun-if-changed=health-reminder.ico");
     println!("cargo:rerun-if-changed=health-reminder-paused.ico");
-    println!("cargo:rerun-if-changed=health-reminder-water.ico");
-    println!("cargo:rerun-if-changed=health-reminder-exercise.ico");
     println!("cargo:rerun-if-changed=health-reminder.rc");
 
     if env::var_os("CARGO_CFG_WINDOWS").is_none() {

@@ -1,8 +1,5 @@
 1 ICON "health-reminder.ico"
 2 ICON "health-reminder-paused.ico"
-3 ICON "health-reminder-water.ico"
-4 ICON "health-reminder-exercise.ico"
-
 1 VERSIONINFO
 FILEVERSION 2026,1,0,0
 PRODUCTVERSION 2026,1,0,0
