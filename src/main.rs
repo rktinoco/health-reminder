@@ -27,13 +27,9 @@ const TIMER_ID: usize = 1;
 const IDM_PAUSE: usize = 100;
 const IDM_STARTUP: usize = 101;
 const IDM_DRINK_OFF: usize = 104;
-const IDM_DRINK_15: usize = 110;
-const IDM_DRINK_30: usize = 111;
-const IDM_DRINK_60: usize = 112;
-const IDM_EXERCISE_30: usize = 120;
-const IDM_EXERCISE_60: usize = 121;
-const IDM_EXERCISE_120: usize = 122;
 const IDM_EXERCISE_OFF: usize = 123;
+const IDM_DRINK_INTERVAL_BASE: usize = 200;
+const IDM_EXERCISE_INTERVAL_BASE: usize = 220;
 const IDM_LANG_EN: usize = 130;
 const IDM_LANG_ES: usize = 131;
 const IDM_LANG_PT: usize = 132;
@@ -62,6 +58,7 @@ const KEY_WRITE: u32 = 0x20006;
 const REG_SZ: u32 = 1;
 const REG_DWORD: u32 = 4;
 const ERROR_SUCCESS: i32 = 0;
+const ERROR_ALREADY_EXISTS: u32 = 183;
 const HKEY_CURRENT_USER: Handle = 0x80000001usize as Handle;
 const SETTINGS_KEY: &str = "Software\\RKTSI\\HealthReminder";
 const IDI_APPLICATION: usize = 32512;
@@ -132,6 +129,13 @@ extern "system" {
     fn TrackPopupMenu(menu: Hmenu, flags: u32, x: i32, y: i32, reserved: i32, hwnd: Hwnd, rect: *const c_void) -> i32;
     fn DestroyMenu(menu: Hmenu) -> i32;
     fn MessageBoxW(hwnd: Hwnd, text: *const u16, caption: *const u16, kind: u32) -> i32;
+}
+
+#[link(name = "kernel32")]
+extern "system" {
+    fn CreateMutexW(attributes: *const c_void, initial_owner: i32, name: *const u16) -> Handle;
+    fn GetLastError() -> u32;
+    fn CloseHandle(handle: Handle) -> i32;
 }
 
 #[link(name = "shell32")]
@@ -274,11 +278,11 @@ fn save_settings(state: &AppState) {
 }
 
 fn valid_drink_interval(value: u32) -> u64 {
-    match value { 900 | 1800 | 3600 => value as u64, _ => 1800 }
+    if (900..=7200).contains(&value) && value % 900 == 0 { value as u64 } else { 1800 }
 }
 
 fn valid_exercise_interval(value: u32) -> u64 {
-    match value { 1800 | 3600 | 7200 => value as u64, _ => 3600 }
+    if (900..=7200).contains(&value) && value % 900 == 0 { value as u64 } else { 3600 }
 }
 
 fn load_locale() -> Locale {
@@ -380,17 +384,21 @@ fn show_menu(hwnd: Hwnd, state: &AppState) {
         let intervals_menu = CreatePopupMenu();
         let drink_menu = CreatePopupMenu();
         add_menu_item(drink_menu, IDM_DRINK_OFF, t.off);
-        add_menu_item(drink_menu, IDM_DRINK_15, "15 min");
-        add_menu_item(drink_menu, IDM_DRINK_30, "30 min");
-        add_menu_item(drink_menu, IDM_DRINK_60, "60 min");
-        CheckMenuItem(drink_menu, if !state.water_enabled { IDM_DRINK_OFF } else if state.drink_seconds == 900 { IDM_DRINK_15 } else if state.drink_seconds == 1800 { IDM_DRINK_30 } else { IDM_DRINK_60 }, MF_CHECKED);
+        for step in 1..=8 {
+            let minutes = step * 15;
+            add_menu_item(drink_menu, IDM_DRINK_INTERVAL_BASE + step - 1, &format!("{} min", minutes));
+        }
+        let drink_selection = if state.water_enabled { IDM_DRINK_INTERVAL_BASE + (state.drink_seconds / 900) as usize - 1 } else { IDM_DRINK_OFF };
+        CheckMenuItem(drink_menu, drink_selection, MF_CHECKED);
         add_submenu(intervals_menu, drink_menu, t.drink);
         let exercise_menu = CreatePopupMenu();
         add_menu_item(exercise_menu, IDM_EXERCISE_OFF, t.off);
-        add_menu_item(exercise_menu, IDM_EXERCISE_30, "30 min");
-        add_menu_item(exercise_menu, IDM_EXERCISE_60, "60 min");
-        add_menu_item(exercise_menu, IDM_EXERCISE_120, "120 min");
-        CheckMenuItem(exercise_menu, if !state.exercise_enabled { IDM_EXERCISE_OFF } else if state.exercise_seconds == 1800 { IDM_EXERCISE_30 } else if state.exercise_seconds == 3600 { IDM_EXERCISE_60 } else { IDM_EXERCISE_120 }, MF_CHECKED);
+        for step in 1..=8 {
+            let minutes = step * 15;
+            add_menu_item(exercise_menu, IDM_EXERCISE_INTERVAL_BASE + step - 1, &format!("{} min", minutes));
+        }
+        let exercise_selection = if state.exercise_enabled { IDM_EXERCISE_INTERVAL_BASE + (state.exercise_seconds / 900) as usize - 1 } else { IDM_EXERCISE_OFF };
+        CheckMenuItem(exercise_menu, exercise_selection, MF_CHECKED);
         add_submenu(intervals_menu, exercise_menu, t.exercise);
         add_submenu(menu, intervals_menu, t.intervals);
         AppendMenuW(menu, MF_SEPARATOR, 0, null());
@@ -456,19 +464,25 @@ unsafe extern "system" fn window_proc(hwnd: Hwnd, message: u32, w_param: Wparam,
             IDM_TEST => { let t = texts(state.locale); notify(hwnd, t.test_title, t.test_body); }
             IDM_STARTUP => { let enabled = !state.startup; if set_startup(enabled) { state.startup = enabled; } else { let t = texts(state.locale); let caption = wide(t.name); let body = wide(t.error); MessageBoxW(hwnd, body.as_ptr(), caption.as_ptr(), 0x10); } }
             IDM_DRINK_OFF => state.water_enabled = false,
-            IDM_DRINK_15 => { state.water_enabled = true; state.drink_seconds = 900; state.next_drink = now() + Duration::from_secs(900); }
-            IDM_DRINK_30 => { state.water_enabled = true; state.drink_seconds = 1800; state.next_drink = now() + Duration::from_secs(1800); }
-            IDM_DRINK_60 => { state.water_enabled = true; state.drink_seconds = 3600; state.next_drink = now() + Duration::from_secs(3600); }
             IDM_EXERCISE_OFF => state.exercise_enabled = false,
-            IDM_EXERCISE_30 => { state.exercise_enabled = true; state.exercise_seconds = 1800; state.next_exercise = now() + Duration::from_secs(1800); }
-            IDM_EXERCISE_60 => { state.exercise_enabled = true; state.exercise_seconds = 3600; state.next_exercise = now() + Duration::from_secs(3600); }
-            IDM_EXERCISE_120 => { state.exercise_enabled = true; state.exercise_seconds = 7200; state.next_exercise = now() + Duration::from_secs(7200); }
             IDM_LANG_EN => state.locale = Locale::English,
             IDM_LANG_ES => state.locale = Locale::Spanish,
             IDM_LANG_PT => state.locale = Locale::Portuguese,
             IDM_ABOUT => show_about(hwnd, state.locale),
             IDM_EXIT => { DestroyWindow(hwnd); }
             _ => {}
+        }
+        let command = w_param & 0xffff;
+        if (IDM_DRINK_INTERVAL_BASE..IDM_DRINK_INTERVAL_BASE + 8).contains(&command) {
+            let seconds = ((command - IDM_DRINK_INTERVAL_BASE + 1) as u64) * 900;
+            state.water_enabled = true;
+            state.drink_seconds = seconds;
+            state.next_drink = now() + Duration::from_secs(seconds);
+        } else if (IDM_EXERCISE_INTERVAL_BASE..IDM_EXERCISE_INTERVAL_BASE + 8).contains(&command) {
+            let seconds = ((command - IDM_EXERCISE_INTERVAL_BASE + 1) as u64) * 900;
+            state.exercise_enabled = true;
+            state.exercise_seconds = seconds;
+            state.next_exercise = now() + Duration::from_secs(seconds);
         }
         if (w_param & 0xffff) != IDM_EXIT { save_settings(state); update_tray_icon(hwnd, state); }
         return 0;
@@ -484,6 +498,13 @@ unsafe extern "system" fn window_proc(hwnd: Hwnd, message: u32, w_param: Wparam,
 }
 
 fn main() {
+    let mutex_name = wide("Local\\HealthReminder.Singleton");
+    let _instance_mutex = unsafe { CreateMutexW(null(), 0, mutex_name.as_ptr()) };
+    if _instance_mutex.is_null() { return; }
+    if unsafe { GetLastError() } == ERROR_ALREADY_EXISTS {
+        unsafe { CloseHandle(_instance_mutex); }
+        return;
+    }
     let locale = load_locale();
     let t = texts(locale);
     let class_name = wide("HealthReminderWindow");
