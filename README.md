@@ -11,10 +11,11 @@ Long stretches at a desk make it easy to forget the basics. Health Reminder brin
 ## Features
 
 - **Hydration and movement reminders** with adjustable schedules
-- **Emoji-labeled notifications** for water, movement, and test reminders
+- **Combined notifications** when water and movement reminders are due together
 - **Quiet tray experience** with a tooltip showing what reminder is next
 - **Quick pause and resume** whenever you need uninterrupted time
-- **Personalized intervals:** water every 15, 30, or 60 minutes; movement every 30, 60, or 120 minutes
+- **Personalized intervals:** set water and movement reminders in 15-minute steps from 15 minutes to 2 hours, or turn either one off
+- **Single-instance protection** to prevent duplicate reminders
 - **English, Spanish, and Portuguese** interface and notifications
 - **Optional Windows startup** so reminders are ready when you are
 - **Test notification** to check that reminders are working

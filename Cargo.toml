@@ -1,6 +1,6 @@
 [package]
 name = "health_reminder"
-version = "2026.1.0"
+version = "2026.2.0"
 edition = "2021"
 description = "A dependency-free Windows tray app for hydration and exercise reminders"
 
