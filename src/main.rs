@@ -39,7 +39,7 @@ const IDM_TEST: usize = 140;
 const IDM_ABOUT: usize = 198;
 const IDM_EXIT: usize = 199;
 const IDI_WATER: usize = 3;
-const IDI_CHAIR: usize = 4;
+const IDI_EXERCISE: usize = 4;
 
 const NIM_ADD: u32 = 0;
 const NIM_DELETE: u32 = 2;
@@ -419,7 +419,7 @@ unsafe extern "system" fn window_proc(hwnd: Hwnd, message: u32, w_param: Wparam,
         if !state.paused {
             let current = now();
             if current >= state.next_drink { let t = texts(state.locale); notify(hwnd, t.drink_title, t.drink_body, Some(IDI_WATER)); state.next_drink = current + Duration::from_secs(state.drink_seconds); }
-            if current >= state.next_exercise { let t = texts(state.locale); notify(hwnd, t.exercise_title, t.exercise_body, Some(IDI_CHAIR)); state.next_exercise = current + Duration::from_secs(state.exercise_seconds); }
+            if current >= state.next_exercise { let t = texts(state.locale); notify(hwnd, t.exercise_title, t.exercise_body, Some(IDI_EXERCISE)); state.next_exercise = current + Duration::from_secs(state.exercise_seconds); }
         }
         update_tray_icon(hwnd, state);
         return 0;
