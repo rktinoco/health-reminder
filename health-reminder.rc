@@ -1,0 +1,31 @@
+1 ICON "health-reminder.ico"
+2 ICON "health-reminder-paused.ico"
+3 ICON "health-reminder-water.ico"
+4 ICON "health-reminder-chair.ico"
+
+1 VERSIONINFO
+FILEVERSION 2026,1,0,0
+PRODUCTVERSION 2026,1,0,0
+FILEFLAGSMASK 0x3fL
+FILEFLAGS 0x0L
+FILEOS 0x40004L
+FILETYPE 0x1L
+{
+	BLOCK "StringFileInfo"
+	{
+		BLOCK "040904B0"
+		{
+			VALUE "CompanyName", "RKTSI"
+			VALUE "FileDescription", "Health Reminder"
+			VALUE "FileVersion", "2026.01"
+			VALUE "InternalName", "Health Reminder"
+			VALUE "OriginalFilename", "health-reminder.exe"
+			VALUE "ProductName", "Health Reminder"
+			VALUE "ProductVersion", "2026.01"
+		}
+	}
+	BLOCK "VarFileInfo"
+	{
+		VALUE "Translation", 0x0409, 1200
+	}
+}
